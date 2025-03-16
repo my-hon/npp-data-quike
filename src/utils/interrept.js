@@ -3,7 +3,7 @@ import axios from 'axios';
 
 // 创建 axios 实例
 const instance = axios.create({
-  baseURL: 'https://localhost:8888/npp/v1/api', // 根据实际情况修改
+  baseURL: 'http://127.0.0.1:4523/m1/6014121-5703001-default', // 根据实际情况修改
   timeout: 10000 // 请求超时时间
 });
 
@@ -11,13 +11,21 @@ const instance = axios.create({
 instance.interceptors.response.use(
   response => {
     // 正常响应处理
-    const { status, data } = response;
-    return { status, data };
+    const {
+      status,
+      data
+    } = response;
+    return {
+      status,
+      data
+    };
   },
   error => {
     // 错误响应处理
     if (error.response) {
-      const { status } = error.response;
+      const {
+        status
+      } = error.response;
       switch (status) {
         case 400:
           console.error('请求参数错误');

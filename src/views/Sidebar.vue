@@ -1,6 +1,7 @@
 <script setup>
-import { h, ref, onMounted } from 'vue'
-import { get } from '@/utils/requests'
+import { h, ref, onMounted, watch } from 'vue'
+import { get } from '../utils/requests.js'
+import { Menu as IconMenu, Message, Setting } from '@element-plus/icons-vue'
 
 const props = defineProps({
   activeTab: {
@@ -9,12 +10,26 @@ const props = defineProps({
   }
 })
 
+const emit = defineEmits(['menu-click'])
 const menuItems = ref({})
+
+// 新增图标映射和标题映射
+const tabConfig = {
+  tab0: { icon: 'message', title: '首页' },
+  tab1: { icon: 'message', title: '数据管理' },
+  tab2: { icon: 'monitor', title: '实时监控' },
+  tab3: { icon: 'clock', title: '历史数据' },
+  tab4: { icon: 'data-analysis', title: '报表分析' },
+  tab5: { icon: 'setting', title: '系统设置' }
+}
+
+const getTabIcon = (tab) => tabConfig[tab]?.icon || 'setting'
+const getTabTitle = (tab) => tabConfig[tab]?.title || '未知菜单'
 
 // 获取所有tab的菜单项
 const fetchMenuItems = async () => {
   try {
-    const response = await get('/menu-items')
+    const response = await get('/api/menu-items')
     menuItems.value = response.data
   } catch (error) {
     console.error('获取菜单项失败:', error)
@@ -24,64 +39,57 @@ const fetchMenuItems = async () => {
 // 组件挂载时获取数据
 onMounted(fetchMenuItems)
 
-const sidebarMap = {
-  tab1: () => h('div', { mode: 'vertical' }, [
-    h('h3', '数据概览'),
-    h('el-menu', { 
-      mode: 'vertical',
-      style: 'display: flex; flex-direction: column;'
-    }, 
-    menuItems.value.tab1?.map(item => 
-      h('el-menu-item', { style: 'margin-bottom: 10px;' }, item.name)
-    ))
-  ]),
-  tab2: () => h('div', { mode: 'vertical' }, [
-    h('h3', '实时监控'),
-    h('el-menu', { 
-      mode: 'vertical',
-      style: 'display: flex; flex-direction: column;'
-    }, 
-    menuItems.value.tab2?.map(item => 
-      h('el-menu-item', { style: 'margin-bottom: 10px;' }, item.name)
-    ))
-  ]),
-  tab3: () => h('div', { mode: 'vertical' }, [
-    h('h3', '历史数据'),
-    h('el-menu', { 
-      mode: 'vertical',
-      style: 'display: flex; flex-direction: column;'
-    }, 
-    menuItems.value.tab3?.map(item => 
-      h('el-menu-item', { style: 'margin-bottom: 10px;' }, item.name)
-    ))
-  ]),
-  tab4: () => h('div', { mode: 'vertical' }, [
-    h('h3', '报表分析'),
-    h('el-menu', { 
-      mode: 'vertical',
-      style: 'display: flex; flex-direction: column;'
-    }, 
-    menuItems.value.tab4?.map(item => 
-      h('el-menu-item', { style: 'margin-bottom: 10px;' }, item.name)
-    ))
-  ]),
-  tab5: () => h('div', { mode: 'vertical' }, [
-    h('h3', '系统设置'),
-    h('el-menu', { 
-      mode: 'vertical',
-      style: 'display: flex; flex-direction: column;'
-    }, 
-    menuItems.value.tab5?.map(item => 
-      h('el-menu-item', { style: 'margin-bottom: 10px;' }, item.name)
-    ))
-  ])
-}
+// 新增响应式变量控制展开菜单
+const openedMenus = ref([props.activeTab])
 
-const renderSidebar = () => {
-  return sidebarMap[props.activeTab]()
-}
+const activeMenu = ref(props.activeTab + '-0');
+// 监听activeTab变化
+watch(() => props.activeTab, (newVal) => {
+  activeMenu.value = newVal + '-0'; // 更新为第一个二级菜单
+})
 </script>
 
 <template>
-  <renderSidebar />
+  <div>
+    <el-scrollbar class="sidebar-container">
+      <!-- 原始菜单结构 -->
+      <el-menu :default-openeds="openedMenus" :default-active="activeMenu" v-if="menuItems[activeTab]?.length">
+        <el-sub-menu :index="activeTab">
+          <template #title>
+            <el-icon>
+              <component :is="getTabIcon(activeTab)" />
+            </el-icon>
+            {{ getTabTitle(activeTab) }}
+          </template>
+
+          <el-menu-item v-for="(item, index) in menuItems[activeTab]" :key="index" :index="`${activeTab}-${index}`"
+            @click="emit('menu-click', `${activeTab}-${index}`)">
+            {{ item.name }}
+          </el-menu-item>
+        </el-sub-menu>
+      </el-menu>
+
+      <!-- 加载状态提示 -->
+      <div v-else class="loading-tip">
+        菜单加载中...
+      </div>
+    </el-scrollbar>
+  </div>
 </template>
+
+<style scoped>
+/* 恢复原始样式 */
+
+:deep(.el-menu) {
+  background-color: transparent;
+  --el-menu-text-color: #303133;
+  --el-menu-active-color: #409eff;
+  --el-menu-hover-bg-color: #e6f7ff;
+}
+
+:deep(.el-menu-item) {
+  font-size: 14px;
+  height: 40px;
+  line-height: 40px;
+}
+</style>
