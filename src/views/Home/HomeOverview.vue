@@ -148,7 +148,8 @@ onMounted(() => {
             <el-col :span="24">
                 <el-card style="height: 350px;">
                     <div class="table-header">节点管理</div>
-                    <el-table :data="nodeList" style="width: 100%;height: calc(100% - 50px);overflow-y: auto;">
+                    <el-table :data="nodeList" style="width: 100%;height: calc(100% - 50px);overflow-y: auto;"
+                        class="node-table">
                         <el-table-column prop="hostname" label="主机名" :span-method="({ row, $index }) => {
             const prevRow = nodeList.value[$index - 1]
             if (prevRow && prevRow.hostname === row.hostname) {
@@ -321,5 +322,37 @@ onMounted(() => {
     margin-bottom: 16px;
     padding: 0 16px;
     padding-top: 16px;
+}
+
+/* 新增样式 */
+.node-table {
+    overflow-y: auto;
+}
+
+.node-table .el-table__body-wrapper {
+    overflow-y: auto !important;
+}
+
+.node-table .el-table__body {
+    min-height: 100px;
+}
+
+/* 确保滚动条样式统一 */
+.node-table::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+}
+
+.node-table::-webkit-scrollbar-track {
+    background: #f1f1f1;
+}
+
+.node-table::-webkit-scrollbar-thumb {
+    background: #888;
+    border-radius: 3px;
+}
+
+.node-table::-webkit-scrollbar-thumb:hover {
+    background: #555;
 }
 </style>

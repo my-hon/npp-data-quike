@@ -1,6 +1,12 @@
 <script setup>
 import { ref } from 'vue'
+import AddDataSourceDialog from './components/DataSourceManagement/AddDataSourceDialog.vue'
 
+const addDataSourceDialog = ref(null)
+
+const addData = () => {
+    addDataSourceDialog.value.open()
+}
 // 表格列配置（保持与WarningInstances一致的结构）
 const tableColumns = ref([
     { type: 'index', label: '序号', width: 60 },
@@ -32,73 +38,84 @@ const tableColumns = ref([
         label: '操作',
         width: 150,
         fixed: 'right',
-        cellRenderer: ({ row }) => ({
-            component: 'div',
-            class: 'operation-btns',
-            children: [
-                {
-                    component: 'el-button',
-                    props: {
-                        type: 'primary',
-                        link: true,
-                        icon: 'Refresh',
-                        title: '立即检测',
-                        loading: row.checkLoading
-                    },
-                    on: { click: () => checkData(row) }
-                },
-                {
-                    component: 'el-dropdown',
-                    children: [
-                        {
-                            component: 'el-button',
-                            props: {
-                                type: 'info',
-                                link: true,
-                                icon: 'More',
-                                title: '更多操作'
-                            }
+        scopedSlots: {
+            default: ({ row }) => ({
+                component: 'div',
+                class: 'operation-btns',
+                children: [
+                    {
+                        component: 'el-button',
+                        props: {
+                            type: 'primary',
+                            link: true,
+                            icon: 'el-icon-refresh',
+                            title: '立即检测',
+                            loading: row.checkLoading
                         },
-                        {
-                            component: 'template',
-                            slots: {
-                                dropdown: () => ({
-                                    component: 'el-dropdown-menu',
-                                    children: [
-                                        {
-                                            component: 'el-dropdown-item',
-                                            on: { click: () => showLog(row) },
-                                            children: [
-                                                { component: 'el-icon', children: [{ component: 'Document' }] },
-                                                '日志'
-                                            ]
-                                        },
-                                        {
-                                            component: 'el-dropdown-item',
-                                            on: { click: () => editData(row) },
-                                            children: [
-                                                { component: 'el-icon', children: [{ component: 'Edit' }] },
-                                                '编辑'
-                                            ]
-                                        },
-                                        {
-                                            component: 'el-dropdown-item',
-                                            class: 'danger-item',
-                                            on: { click: () => deleteData(row) },
-                                            children: [
-                                                { component: 'el-icon', children: [{ component: 'Delete' }] },
-                                                '删除'
-                                            ]
-                                        }
-                                    ]
-                                })
-                            }
+                        on: {
+                            click: () => checkData(row)
                         }
-                    ]
-                }
-            ]
-        })
+                    },
+                    {
+                        component: 'el-dropdown',
+                        children: [
+                            {
+                                component: 'el-button',
+                                props: {
+                                    type: 'info',
+                                    link: true,
+                                    icon: 'el-icon-more',
+                                    title: '更多操作'
+                                }
+                            },
+                            {
+                                component: 'template',
+                                slots: {
+                                    dropdown: () => ({
+                                        component: 'el-dropdown-menu',
+                                        children: [
+                                            {
+                                                component: 'el-dropdown-item',
+                                                on: {
+                                                    click: () => showLog(row)
+                                                },
+                                                children: [
+                                                    { component: 'i', class: 'el-icon-document' },
+                                                    '日志'
+                                                ]
+                                            },
+                                            {
+                                                component: 'el-dropdown-item',
+                                                on: {
+                                                    click: () => editData(row)
+                                                },
+                                                children: [
+                                                    { component: 'i', class: 'el-icon-edit' },
+                                                    '编辑'
+                                                ]
+                                            },
+                                            {
+                                                component: 'el-dropdown-item',
+                                                class: 'danger-item',
+                                                on: {
+                                                    click: () => deleteData(row)
+                                                },
+                                                children: [
+                                                    { component: 'i', class: 'el-icon-delete' },
+                                                    '删除'
+                                                ]
+                                            }
+                                        ]
+                                    })
+                                }
+                            }
+                        ]
+                    }
+                ]
+            })
+        }
     }
+
 ])
 
 // 模拟数据
@@ -135,29 +152,17 @@ const deleteData = (row) => { /* 删除逻辑 */ }
                     <el-button type="primary" @click="addData">
                         添加数据源
                     </el-button>
-                    <el-select 
-                        v-model="datasourceType" 
-                        placeholder="全部类型"
-                        class="type-selector"
-                        filterable 
-                        clearable
+                    <el-select v-model="datasourceType" placeholder="全部类型" class="type-selector" filterable clearable
                         @change="handleChnage">
-                        <el-option 
-                            v-for="item in datasourceTypeList" 
-                            :key="item.value" 
-                            :label="item.label"
-                            :value="item.value"/>
+                        <el-option v-for="item in datasourceTypeList" :key="item.value" :label="item.label"
+                            :value="item.value" />
                     </el-select>
-                    <el-input 
-                        v-model="keyword"
-                        placeholder="搜索名称/连接信息/备注"
-                        class="search-input"
-                        clearable
-                        :maxlength="200"
-                        @input="inputEvent"
-                        @keyup.enter="initData(false)">
+                    <el-input v-model="keyword" placeholder="搜索名称/连接信息/备注" class="search-input" clearable
+                        :maxlength="200" @input="inputEvent" @keyup.enter="initData(false)">
                         <template #suffix>
-                            <el-icon class="search-icon"><Search /></el-icon>
+                            <el-icon class="search-icon">
+                                <Search />
+                            </el-icon>
                         </template>
                     </el-input>
                 </div>
@@ -187,7 +192,7 @@ const deleteData = (row) => { /* 删除逻辑 */ }
                     class="pagination-wrapper" />
             </LoadingPage>
         </div>
-
+        <AddDataSourceDialog ref="addDataSourceDialog" />
     </div>
 </template>
 
@@ -197,17 +202,19 @@ const deleteData = (row) => { /* 删除逻辑 */ }
     align-items: center;
     gap: 12px;
     width: 100%;
-    
+
     .type-selector {
         width: 160px;
         margin-right: auto;
     }
-    
+
     .search-input {
         width: 320px;
+
         :deep(.el-input__inner) {
             padding-right: 40px;
         }
+
         .search-icon {
             font-size: 16px;
             padding: 0 12px;
@@ -215,6 +222,7 @@ const deleteData = (row) => { /* 删除逻辑 */ }
         }
     }
 }
+
 .operation-btns {
     display: flex;
     align-items: center;

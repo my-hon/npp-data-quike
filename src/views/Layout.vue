@@ -25,9 +25,13 @@ const handleMenuClick = (menuId) => {
     const routeMap = {
         'tab0-0': '/home/overview',
         'tab0-1': '/home/intelligent-board',
+        'tab0-3': '/home/interface-service',
         'tab1-0': '/data/statistics',
         'tab1-1': '/data/source-management',
         'tab1-2': '/data/warning-instances',
+        'tab1-3': '/data/metadata',
+        'tab1-4': '/data/uploadanddownload',
+        'tab1-5': '/data/data-analyse',
         'tab5-0': '/setting/user-management',
         'tab5-1': '/setting/access-permissions',
         'tab5-2': '/setting/log-recording',
@@ -57,14 +61,18 @@ onMounted(() => {
     const routeMap = {
         '/home/overview': 'tab0',
         '/home/intelligent-board': 'tab0',
+        '/home/interface-service': 'tab0',
         '/data/statistics': 'tab1',
         '/data/source-management': 'tab1',
         '/data/warning-instances': 'tab1',
+        '/data/metadata': 'tab1',
+        '/data/uploadanddownload': 'tab1',
+        '/data/data-analyse': 'tab1',
         '/setting/user-management': 'tab5',
         '/setting/access-permissions': 'tab5',
         '/setting/log-recording': 'tab5',
         '/setting/menu-management': 'tab5',
-        '/setting/interface-service': 'tab5',
+        // '/setting/interface-service': 'tab5',
 
     };
     activeTab.value = routeMap[currentPath] || 'tab0';

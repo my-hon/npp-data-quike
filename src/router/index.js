@@ -7,12 +7,12 @@ const routes = [{
         path: '/',
         component: () => import('../views/Layout.vue'),
         meta: {
-            requiresAuth: true
+            requiresAuth: true,
         },
         children: [{
                 path: '',
                 name: 'Home',
-                component: () => import('../views/MainContent.vue')
+                component: () => import('../views/MainContent.vue'),
             },
             {
                 path: '/home/overview',
@@ -23,6 +23,11 @@ const routes = [{
                 path: '/home/intelligent-board',
                 name: 'IntelligentBoard',
                 component: () => import('../views/Home/IntelligentBoard.vue')
+            },
+            {
+                path: '/home/interface-service',
+                name: 'InterfaceService',
+                component: () => import('../views/Home/InterfaceService.vue')
             },
             {
                 path: '/data/statistics',
@@ -38,6 +43,21 @@ const routes = [{
                 path: '/data/warning-instances',
                 name: 'WarningInstances',
                 component: () => import('../views/DataOverview/WarningInstances.vue')
+            },
+            {
+                path: '/data/metadata',
+                name: 'Metadata',
+                component: () => import('../views/DataOverview/Metadata.vue')
+            },
+            {
+                path: '/data/uploadanddownload',
+                name: 'UploadAndDownload',
+                component: () => import('../views/DataOverview/UploadAndDownload.vue')
+            },
+            {
+                path: '/data/data-analyse',
+                name: 'DataAnalyse',
+                component: () => import('../views/DataOverview/DataAnalyse.vue')
             },
             {
                 path: '/setting/access-permissions',
@@ -57,10 +77,6 @@ const routes = [{
                 path: '/setting/menu-management',
                 name: 'MenuManagement',
                 component: () => import('../views/Setting/MenuManagement.vue')
-            }, {
-                path: '/setting/interface-service',
-                name: 'InterfaceService',
-                component: () => import('../views/Setting/InterfaceService.vue')
             },
         ]
     },
