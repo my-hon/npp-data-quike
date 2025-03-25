@@ -9,36 +9,48 @@
 
         <!-- 搜索和操作区域 -->
         <div class="search-actions">
-            <el-input v-model="filter.keyword" placeholder="请输入菜单名称或英文名称" clearable style="width: 240px" />
+            <el-input v-model="filter.keyword" placeholder="请输入菜单名称或英文名称" clearable @input="handleSearch"
+                style="width: 240px" />
 
             <el-button type="primary" @click="handleSearch">搜索</el-button>
             <el-button type="success" @click="handleAdd">新增菜单</el-button>
         </div>
 
         <!-- 数据表格 -->
-        <el-table :data="tableData" style="width: 100%">
+        <el-table :data="filteredTableData" style="width: 100%">
             <el-table-column type="index" label="序号" width="80" />
-            <el-table-column prop="name" label="菜单名称" />
+            <el-table-column prop="name" label="菜单名称" sortable />
             <el-table-column prop="enName" label="英文名称" />
-            <el-table-column prop="type" label="类型">
+            <el-table-column prop="path" label="访问路径" />
+            <el-table-column prop="type" label="类型" width="100">
                 <template #default="{ row }">
                     <el-tag :type="row.type === '目录' ? 'primary' : 'success'">
                         {{ row.type }}
                     </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column prop="path" label="请求地址" />
-            <el-table-column prop="sort" label="排序" />
-            <el-table-column label="是否可见">
+            <el-table-column label="关联角色" width="200">
                 <template #default="{ row }">
-                    <el-switch v-model="row.visible" active-color="#13ce66" inactive-color="#ff4949"
-                        @change="handleVisibleChange(row)" />
+                    <el-tag v-for="role in row.roles" :key="role" type="info" style="margin-right: 5px;">
+                        {{ role }}
+                    </el-tag>
                 </template>
             </el-table-column>
-            <el-table-column label="操作" width="150">
+            <el-table-column label="状态" width="100">
                 <template #default="{ row }">
-                    <el-button type="warning" size="small" @click="handleEdit(row)">
+                    <el-tag :type="row.visible ? 'success' : 'danger'">
+                        {{ row.visible ? '启用' : '禁用' }}
+                    </el-tag>
+                </template>
+            </el-table-column>
+            <el-table-column label="操作" width="180">
+                <template #default="{ row }">
+                    <el-button type="primary" size="small" @click="handleEdit(row)">
                         编辑
+                    </el-button>
+                    <el-button :type="row.visible ? 'warning' : 'success'" size="small"
+                        @click="handleToggleStatus(row)">
+                        {{ row.visible ? '禁用' : '启用' }}
                     </el-button>
                     <el-button type="danger" size="small" @click="handleDelete(row)">
                         删除
@@ -55,7 +67,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // 模拟数据
 const filter = ref({
@@ -69,7 +81,8 @@ const tableData = ref([
         type: '目录',
         path: '/dashboard/index',
         sort: 1,
-        visible: false
+        visible: true,
+        roles: ['管理员', '编辑者']
     },
     {
         name: '数据概览',
@@ -77,7 +90,8 @@ const tableData = ref([
         type: '目录',
         path: '/data/overview',
         sort: 2,
-        visible: false
+        visible: true,
+        roles: ['管理员']
     },
     {
         name: '实时监控',
@@ -85,7 +99,8 @@ const tableData = ref([
         type: '菜单',
         path: '/monitor/index',
         sort: 3,
-        visible: true
+        visible: true,
+        roles: ['管理员', '查看者']
     },
     {
         name: '系统设置',
@@ -93,9 +108,13 @@ const tableData = ref([
         type: '目录',
         path: '/setting/index',
         sort: 4,
-        visible: true
+        visible: true,
+        roles: ['管理员']
     }
 ])
+
+const filteredTableData = ref([])
+
 
 const pagination = ref({
     currentPage: 1,
@@ -105,7 +124,13 @@ const pagination = ref({
 
 // 事件处理
 const handleSearch = () => {
-    console.log('搜索条件:', filter.value)
+    filteredTableData.value = tableData.value.filter(menu => {
+        const keyword = filter.value.keyword.toLowerCase()
+        return (
+            menu.name.toLowerCase().includes(keyword) ||
+            menu.enName.toLowerCase().includes(keyword)
+        )
+    })
 }
 
 const handleAdd = () => {
@@ -129,6 +154,15 @@ const handleEdit = (row) => {
 const handleDelete = (row) => {
     console.log('删除:', row)
 }
+
+const handleToggleStatus = (row) => {
+    row.visible = !row.visible
+    console.log('状态切换:', row)
+}
+
+onMounted(() => {
+    filteredTableData.value = [...tableData.value]
+})
 </script>
 
 <style scoped>

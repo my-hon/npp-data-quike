@@ -9,61 +9,51 @@
 
     <!-- 搜索和操作区域 -->
     <div class="search-actions">
-      <el-select v-model="filter.userType" placeholder="请选择用户类型" clearable>
-        <el-option
-          v-for="type in userTypes"
-          :key="type.value"
-          :label="type.label"
-          :value="type.value"
-        />
+      <el-select v-model="filter.userType" placeholder="用户角色" clearable @change="handleSearch">
+        <el-option v-for="type in userTypes" :key="type.value" :label="type.label" :value="type.value" />
       </el-select>
 
-      <el-input
-        v-model="filter.keyword"
-        placeholder="请输入用户名或邮箱"
-        clearable
-        style="width: 240px"
-      />
+      <el-select v-model="filter.status" placeholder="用户状态" clearable @change="handleSearch">
+        <el-option label="活跃" value="active" />
+        <el-option label="禁用" value="inactive" />
+      </el-select>
+
+      <el-input v-model="filter.keyword" placeholder="用户名/姓名/邮箱" clearable @input="handleSearch" style="width: 240px" />
 
       <el-button type="primary" @click="handleSearch">搜索</el-button>
       <el-button type="success" @click="handleAdd">新增用户</el-button>
     </div>
 
     <!-- 数据表格 -->
-    <el-table :data="tableData" style="width: 100%">
+    <el-table :data="filteredTableData" style="width: 100%">
       <el-table-column type="index" label="序号" width="80" />
-      <el-table-column prop="username" label="用户名" />
+      <el-table-column prop="username" label="用户名" sortable />
       <el-table-column prop="name" label="姓名" />
       <el-table-column prop="email" label="邮箱" />
       <el-table-column prop="phone" label="手机号" />
-      <el-table-column label="功能权限">
+      <el-table-column prop="role" label="角色" width="120">
         <template #default="{ row }">
-          <el-tag
-            v-for="permission in row.permissions"
-            :key="permission"
-            type="info"
-            size="small"
-            style="margin-right: 4px"
-          >
-            {{ permission }}
+          <el-tag :type="row.role === 'admin' ? 'danger' : row.role === 'editor' ? 'warning' : 'info'">
+            {{ row.role === 'admin' ? '管理员' : row.role === 'editor' ? '编辑者' : '访客' }}
           </el-tag>
         </template>
       </el-table-column>
-      <el-table-column label="状态">
+      <el-table-column prop="status" label="状态" width="100">
         <template #default="{ row }">
-          <el-switch
-            v-model="row.status"
-            active-color="#13ce66"
-            inactive-color="#ff4949"
-            @change="handleStatusChange(row)"
-          />
+          <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
+            {{ row.status === 'active' ? '活跃' : '禁用' }}
+          </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="expireDate" label="有效期" />
-      <el-table-column label="操作" width="150">
+      <el-table-column prop="lastLogin" label="最后登录时间" width="160" sortable />
+      <el-table-column label="操作" width="180">
         <template #default="{ row }">
-          <el-button type="warning" size="small" @click="handleEdit(row)">
+          <el-button type="primary" size="small" @click="handleEdit(row)">
             编辑
+          </el-button>
+          <el-button :type="row.status === 'active' ? 'warning' : 'success'" size="small"
+            @click="handleToggleStatus(row)">
+            {{ row.status === 'active' ? '禁用' : '启用' }}
           </el-button>
           <el-button type="danger" size="small" @click="handleDelete(row)">
             删除
@@ -73,23 +63,20 @@
     </el-table>
 
     <!-- 分页 -->
-    <el-pagination
-      v-model:current-page="pagination.currentPage"
-      v-model:page-size="pagination.pageSize"
-      :total="pagination.total"
-      layout="total, sizes, prev, pager, next, jumper"
-      style="margin-top: 20px; justify-content: flex-end"
-    />
+    <el-pagination v-model:current-page="pagination.currentPage" v-model:page-size="pagination.pageSize"
+      :total="pagination.total" layout="total, sizes, prev, pager, next, jumper"
+      style="margin-top: 20px; justify-content: flex-end" />
   </div>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // 模拟数据
 const userTypes = ref([
   { value: 'admin', label: '管理员' },
-  { value: 'user', label: '普通用户' }
+  { value: 'editor', label: '编辑者' },
+  { value: 'viewer', label: '访客' }
 ])
 
 const filter = ref({
@@ -103,17 +90,21 @@ const tableData = ref([
     name: '管理员',
     email: 'admin@example.com',
     phone: '13800138000',
+    role: 'admin',
     permissions: ['数据查看', '数据修改', '数据删除'],
-    status: true,
+    status: 'active',
+    lastLogin: '2023-10-01 14:30:22',
     expireDate: '2024-12-31'
   },
   {
-    username: 'user1',
+    username: 'editor1',
     name: '张三',
     email: 'user1@example.com',
     phone: '13800138001',
-    permissions: ['数据查看'],
-    status: false,
+    role: 'editor',
+    permissions: ['数据查看', '数据修改'],
+    status: 'inactive',
+    lastLogin: '2023-09-30 18:15:10',
     expireDate: '2024-12-31'
   }
 ])
@@ -124,17 +115,44 @@ const pagination = ref({
   total: 20
 })
 
+// 新增一个响应式变量来存储筛选后的数据
+const filteredTableData = ref([])
+
 // 事件处理
 const handleSearch = () => {
-  console.log('搜索条件:', filter.value)
+  const filteredData = tableData.value.filter(user => {
+    // 按用户角色筛选
+    if (filter.value.userType && user.role !== filter.value.userType) {
+      return false
+    }
+    // 按用户状态筛选
+    if (filter.value.status && user.status !== filter.value.status) {
+      return false
+    }
+    // 按关键字筛选
+    if (filter.value.keyword) {
+      const keyword = filter.value.keyword.toLowerCase()
+      return (
+        user.username.toLowerCase().includes(keyword) ||
+        user.name.toLowerCase().includes(keyword) ||
+        user.email.toLowerCase().includes(keyword)
+      )
+    }
+    return true
+  })
+
+  // 更新筛选后的数据和分页信息
+  filteredTableData.value = filteredData
+  pagination.value.total = filteredData.length
 }
 
 const handleAdd = () => {
   console.log('新增用户')
 }
 
-const handleStatusChange = (row) => {
-  console.log('状态变更:', row)
+const handleToggleStatus = (row) => {
+  row.status = row.status === 'active' ? 'inactive' : 'active'
+  console.log('状态切换:', row)
 }
 
 const handleEdit = (row) => {
@@ -144,6 +162,10 @@ const handleEdit = (row) => {
 const handleDelete = (row) => {
   console.log('删除:', row)
 }
+
+onMounted(() => {
+  filteredTableData.value = [...tableData.value]
+})
 </script>
 
 <style scoped>

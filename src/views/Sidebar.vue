@@ -17,7 +17,7 @@ const menuItems = ref({})
 const tabConfig = {
   tab0: { icon: 'message', title: '首页' },
   tab1: { icon: 'message', title: '数据管理' },
-  tab2: { icon: 'monitor', title: '实时监控' },
+  tab2: { icon: 'monitor', title: '接口治理' },
   tab3: { icon: 'clock', title: '历史数据' },
   tab4: { icon: 'data-analysis', title: '报表分析' },
   tab5: { icon: 'setting', title: '系统设置' }

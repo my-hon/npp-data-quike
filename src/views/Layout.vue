@@ -32,6 +32,7 @@ const handleMenuClick = (menuId) => {
         'tab1-3': '/data/metadata',
         'tab1-4': '/data/uploadanddownload',
         'tab1-5': '/data/data-analyse',
+        'tab2-0': '/interface/interface-governance',
         'tab5-0': '/setting/user-management',
         'tab5-1': '/setting/access-permissions',
         'tab5-2': '/setting/log-recording',
@@ -68,6 +69,7 @@ onMounted(() => {
         '/data/metadata': 'tab1',
         '/data/uploadanddownload': 'tab1',
         '/data/data-analyse': 'tab1',
+        '/interface/interface-governance': 'tab2',
         '/setting/user-management': 'tab5',
         '/setting/access-permissions': 'tab5',
         '/setting/log-recording': 'tab5',
@@ -102,6 +104,12 @@ onMounted(() => {
                             <DataAnalysis />
                         </el-icon>
                         <span>数据管理</span>
+                    </el-menu-item>
+                    <el-menu-item index="tab2">
+                        <el-icon>
+                            <Setting />
+                        </el-icon>
+                        <span>接口治理</span>
                     </el-menu-item>
                     <el-menu-item index="tab5">
                         <el-icon>

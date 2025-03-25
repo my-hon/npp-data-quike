@@ -7,52 +7,53 @@
       <el-breadcrumb-item>访问权限管理</el-breadcrumb-item>
     </el-breadcrumb>
 
-    <!-- 搜索和操作区域 -->
+    <!-- 修改搜索区域 -->
     <div class="search-actions">
-      <el-select v-model="filter.user" placeholder="请选择用户" clearable>
-        <el-option
-          v-for="user in userList"
-          :key="user.value"
-          :label="user.label"
-          :value="user.value"
-        />
-      </el-select>
+      <el-input v-model="filter.keyword" placeholder="角色名称" clearable style="width: 200px" @input="handleSearch" />
 
-      <el-select v-model="filter.api" placeholder="请选择接口" clearable>
-        <el-option
-          v-for="api in apiList"
-          :key="api.value"
-          :label="api.label"
-          :value="api.value"
-        />
+      <el-select v-model="filter.status" placeholder="角色状态" clearable @change="handleSearch">
+        <el-option label="启用" value="active" />
+        <el-option label="停用" value="inactive" />
       </el-select>
 
       <el-button type="primary" @click="handleSearch">搜索</el-button>
-      <el-button type="success" @click="handleAdd">新增权限</el-button>
+      <el-button type="success" @click="handleAdd">新增角色</el-button>
     </div>
 
     <!-- 数据表格 -->
-    <el-table :data="tableData" style="width: 100%">
+    <el-table :data="filteredTableData" style="width: 100%">
       <el-table-column type="index" label="序号" width="80" />
-      <el-table-column prop="user" label="申请用户" />
-      <el-table-column prop="api" label="请求接口" />
-      <el-table-column prop="publicKey" label="公钥" />
-      <el-table-column prop="expireDate" label="有效期" />
-      <el-table-column prop="status" label="状态">
+      <el-table-column prop="roleName" label="角色名称" sortable />
+      <el-table-column label="权限范围">
         <template #default="{ row }">
-          <el-switch
-            v-model="row.status"
-            active-color="#13ce66"
-            inactive-color="#ff4949"
-            @change="handleStatusChange(row)"
-          />
+          <el-tag v-for="permission in row.permissions" :key="permission" style="margin-right: 5px;">
+            {{ permission }}
+          </el-tag>
         </template>
       </el-table-column>
-      <el-table-column prop="updateTime" label="更新时间" />
-      <el-table-column label="操作" width="120">
+      <el-table-column label="关联用户">
         <template #default="{ row }">
-          <el-button type="warning" size="small" @click="handleEdit(row)">
+          <el-tag v-for="user in row.users" :key="user" type="info" style="margin-right: 5px;">
+            {{ user }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="status" label="状态" width="100">
+        <template #default="{ row }">
+          <el-tag :type="row.status === 'active' ? 'success' : 'danger'">
+            {{ row.status === 'active' ? '启用' : '停用' }}
+          </el-tag>
+        </template>
+      </el-table-column>
+      <el-table-column prop="updateTime" label="更新时间" width="160" />
+      <el-table-column label="操作" width="180">
+        <template #default="{ row }">
+          <el-button type="primary" size="small" @click="handleEdit(row)">
             编辑
+          </el-button>
+          <el-button :type="row.status === 'active' ? 'warning' : 'success'" size="small"
+            @click="handleToggleStatus(row)">
+            {{ row.status === 'active' ? '停用' : '启用' }}
           </el-button>
           <el-button type="danger" size="small" @click="handleDelete(row)">
             删除
@@ -64,46 +65,55 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 
 // 模拟数据
-const userList = ref([
-  { value: 'user1', label: '用户1' },
-  { value: 'user2', label: '用户2' }
-])
-
-const apiList = ref([
-  { value: 'getLoginUserCount', label: '获取登录用户数' },
-  { value: 'getSystemCount', label: '获取系统统计' }
+// 修改模拟数据
+const roleList = ref([
+  {
+    roleName: '管理员',
+    permissions: ['用户管理', '数据访问', '接口调用'],
+    users: ['用户1', '用户2'],
+    status: 'active'
+  },
+  {
+    roleName: '编辑者',
+    permissions: ['数据访问', '接口调用'],
+    users: ['用户3'],
+    status: 'inactive'
+  }
 ])
 
 const filter = ref({
-  user: '',
-  api: ''
+  roleName: '',
+  status: '',
+  keyword: ''
 })
 
+// 修改表格数据
 const tableData = ref([
   {
-    user: '用户1',
-    api: 'getLoginUserCount',
-    publicKey: '1234567890abcdef',
-    expireDate: '2024-12-31',
-    status: true,
+    roleName: '管理员',
+    permissions: ['用户管理', '数据访问', '接口调用'],
+    users: ['用户1', '用户2'],
+    status: 'active',
     updateTime: '2024-07-01 10:00'
   },
   {
-    user: '用户2',
-    api: 'getSystemCount',
-    publicKey: 'abcdef1234567890',
-    expireDate: '2024-12-31',
-    status: false,
+    roleName: '编辑者',
+    permissions: ['数据访问', '接口调用'],
+    users: ['用户3'],
+    status: 'inactive',
     updateTime: '2024-07-01 11:00'
   }
 ])
 
 // 事件处理
-const handleSearch = () => {
-  console.log('搜索条件:', filter.value)
+
+// 新增事件处理
+const handleToggleStatus = (row) => {
+  row.status = row.status === 'active' ? 'inactive' : 'active'
+  console.log('状态切换:', row)
 }
 
 const handleAdd = () => {
@@ -121,6 +131,28 @@ const handleEdit = (row) => {
 const handleDelete = (row) => {
   console.log('删除:', row)
 }
+
+// 新增一个响应式变量来存储筛选后的数据
+const filteredTableData = ref([])
+
+// 修改事件处理
+const handleSearch = () => {
+  filteredTableData.value = tableData.value.filter(role => {
+    // 按角色名称筛选
+    if (filter.value.keyword && !role.roleName.includes(filter.value.keyword)) {
+      return false
+    }
+    // 按角色状态筛选
+    if (filter.value.status && role.status !== filter.value.status) {
+      return false
+    }
+    return true
+  })
+}
+
+onMounted(() => {
+  filteredTableData.value = [...tableData.value]
+})
 </script>
 
 <style scoped>

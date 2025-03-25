@@ -13,7 +13,50 @@ const stats = ref({
     apis: { internal: 15, external: 7 }
 })
 
+const hadoopNodes = ref([
+    {
+        name: 'hadoop-node-01',
+        status: '运行中',
+        cpuUsage: '45%',
+        lastHeartbeat: '2023-10-01 14:30:22'
+    },
+    {
+        name: 'hadoop-node-02',
+        status: '已停止',
+        cpuUsage: '0%',
+        lastHeartbeat: '2023-09-30 18:15:10'
+    },
+    {
+        name: 'hadoop-node-03',
+        status: '运行中',
+        cpuUsage: '78%',
+        lastHeartbeat: '2023-10-01 14:28:45'
+    }
+])
+
+const hadoopTasks = ref([
+    {
+        id: 'task-001',
+        type: 'MapReduce',
+        status: '进行中',
+        progress: '65%'
+    },
+    {
+        id: 'task-002',
+        type: 'HDFS 维护',
+        status: '已完成',
+        progress: '100%'
+    },
+    {
+        id: 'task-003',
+        type: 'YARN 调度',
+        status: '等待中',
+        progress: '0%'
+    }
+])
+
 // 图表数据
+// 修改图表数据
 const chartData = ref({
     sourceTypes: [
         { value: 1048, name: 'MySQL' },
@@ -24,82 +67,49 @@ const chartData = ref({
     storageTrend: {
         dates: Array.from({ length: 60 }, (_, i) => {
             const now = new Date()
-            const time = new Date(now.getTime() - (60 - i) * 60000) // 从当前时间往前推1小时
-            return `${time.getHours()}:${String(time.getMinutes()).padStart(2, '0')}` // 24小时制，分钟补零
+            const time = new Date(now.getTime() - (60 - i) * 60000)
+            return `${time.getHours()}:${String(time.getMinutes()).padStart(2, '0')}`
         }),
-        counts: Array.from({ length: 60 }, () => Math.floor(Math.random() * 1000)) // 随机生成存储变化数据
+        sources: [
+            {
+                name: 'MySQL',
+                data: Array.from({ length: 60 }, (_, i) => {
+                    const base = 200
+                    const trend = i * 2
+                    const noise = Math.sin(i / 5) * 10
+                    return Math.round(base + trend + noise)
+                }),
+                maxCapacity: 500
+            },
+            {
+                name: 'Oracle',
+                data: Array.from({ length: 60 }, (_, i) => {
+                    const base = 400
+                    const trend = i * 3
+                    const noise = Math.cos(i / 4) * 15
+                    return Math.round(base + trend + noise)
+                }),
+                maxCapacity: 800
+            },
+            {
+                name: 'MongoDB',
+                data: Array.from({ length: 60 }, (_, i) => {
+                    const base = 300
+                    const trend = i * 1.5
+                    const noise = Math.sin(i / 6) * 8
+                    return Math.round(base + trend + noise)
+                }),
+                maxCapacity: 600
+            }
+        ]
     },
     taskTypes: {
-        types: ['数据管理', '数据分析', '权限管理'],
-        counts: [120, 200, 150,]
+        types: ['Hadoop', 'Spark', '关系型数据库', 'NoSQL', '流处理'],
+        counts: [120, 200, 150, 80, 60]
     }
 })
 
-// 节点管理数据
-const nodeList = ref([
-    {
-        hostname: 'node-01',
-        ips: ['192.168.1.101', '192.168.1.102'],
-        type: '计算节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-02',
-        ips: ['192.168.1.103'],
-        type: '存储节点',
-        isAlive: false
-    },
-    {
-        hostname: 'node-03',
-        ips: ['192.168.1.104', '192.168.1.105', '192.168.1.106'],
-        type: '计算节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-04',
-        ips: ['192.168.1.107'],
-        type: '存储节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-05',
-        ips: ['192.168.1.108', '192.168.1.109'],
-        type: '计算节点',
-        isAlive: false
-    },
-    {
-        hostname: 'node-06',
-        ips: ['192.168.1.110'],
-        type: '存储节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-07',
-        ips: ['192.168.1.111', '192.168.1.112'],
-        type: '计算节点',
-        isAlive: false
-    },
-    {
-        hostname: 'node-08',
-        ips: ['192.168.1.113'],
-        type: '存储节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-09',
-        ips: ['192.168.1.114', '192.168.1.115'],
-        type: '计算节点',
-        isAlive: true
-    },
-    {
-        hostname: 'node-10',
-        ips: ['192.168.1.116'],
-        type: '存储节点',
-        isAlive: false
-    }
-])
-
-// 初始化图表
+// 修改初始化图表函数
 const initCharts = () => {
     const pieChart = echarts.init(document.getElementById('pie-chart'))
     pieChart.setOption({
@@ -107,31 +117,55 @@ const initCharts = () => {
         series: [{ type: 'pie', data: chartData.value.sourceTypes }]
     })
 
+    // 修改存储变化图表
     const storageChart = echarts.init(document.getElementById('storage-chart'))
     storageChart.setOption({
         tooltip: { trigger: 'axis' },
         xAxis: { type: 'category', data: chartData.value.storageTrend.dates },
         yAxis: { type: 'value' },
-        series: [{
-            data: chartData.value.storageTrend.counts,
-            type: 'line',
-            areaStyle: { color: '#409EFF' }, // 设置面积图颜色
-            smooth: true // 平滑曲线
-        }]
+        series: [
+            ...chartData.value.storageTrend.sources.map(source => ({
+                name: source.name,
+                data: source.data,
+                type: 'line',
+                smooth: true
+            })),
+            ...chartData.value.storageTrend.sources.map(source => ({
+                name: `${source.name} 最大容量`,
+                data: Array(60).fill(source.maxCapacity),
+                type: 'line',
+                lineStyle: { type: 'dashed' },
+                itemStyle: { opacity: 0 }
+            }))
+        ]
     })
 
+    // 修改任务统计图表
     const barChart = echarts.init(document.getElementById('bar-chart'))
     barChart.setOption({
+        tooltip: { trigger: 'axis' },
         xAxis: { type: 'category', data: chartData.value.taskTypes.types },
         yAxis: { type: 'value' },
-        series: [{ data: chartData.value.taskTypes.counts, type: 'bar' }]
+        series: [{
+            data: chartData.value.taskTypes.counts,
+            type: 'bar',
+            itemStyle: {
+                color: params => {
+                    const colors = ['#5470C6', '#91CC75', '#EE6666', '#FAC858', '#73C0DE']
+                    return colors[params.dataIndex % colors.length]
+                }
+            }
+        }]
     })
 }
+
 
 onMounted(() => {
     initCharts()
 })
 </script>
+
+
 
 <template>
     <div class="overview-container">
@@ -143,44 +177,40 @@ onMounted(() => {
             <Task />
         </el-row>
 
-        <!-- 第二行：节点管理表格 -->
-        <el-row :gutter="20" class="mb-4 nodeList">
-            <el-col :span="24">
-                <el-card style="height: 350px;">
-                    <div class="table-header">节点管理</div>
-                    <el-table :data="nodeList" style="width: 100%;height: calc(100% - 50px);overflow-y: auto;"
-                        class="node-table">
-                        <el-table-column prop="hostname" label="主机名" :span-method="({ row, $index }) => {
-            const prevRow = nodeList.value[$index - 1]
-            if (prevRow && prevRow.hostname === row.hostname) {
-                return { rowspan: 0, colspan: 0 }
-            }
-            let rowspan = 1
-            for (let i = $index + 1; i < nodeList.value.length; i++) {
-                if (nodeList.value[i].hostname === row.hostname) {
-                    rowspan++
-                } else {
-                    break
-                }
-            }
-            return { rowspan, colspan: 1 }
-        }" />
-                        <el-table-column prop="ips" label="主机IP">
+        <!-- 第二行：Hadoop 系统信息 -->
+        <el-row :gutter="20" class="mb-4">
+            <el-col :span="12">
+                <el-card>
+                    <div class="table-header">Hadoop 节点状态</div>
+                    <el-table :data="hadoopNodes" style="width: 100%; height: 300px;">
+                        <el-table-column prop="name" label="节点名称" />
+                        <el-table-column prop="status" label="节点状态">
                             <template #default="{ row }">
-                                <div v-for="ip in row.ips" :key="ip">{{ ip }}</div>
+                                <el-tag :type="row.status === '运行中' ? 'success' : 'danger'">
+                                    {{ row.status }}
+                                </el-tag>
                             </template>
                         </el-table-column>
-                        <el-table-column prop="type" label="节点类型" />
-                        <el-table-column prop="isAlive" label="是否存活">
+                        <el-table-column prop="cpuUsage" label="CPU 使用率" />
+                        <el-table-column prop="lastHeartbeat" label="最后心跳时间" />
+                    </el-table>
+                </el-card>
+            </el-col>
+            <el-col :span="12">
+                <el-card>
+                    <div class="table-header">Hadoop 任务状态</div>
+                    <el-table :data="hadoopTasks" style="width: 100%; height: 300px;">
+                        <el-table-column prop="id" label="任务 ID" />
+                        <el-table-column prop="type" label="任务类型" />
+                        <el-table-column prop="status" label="任务状态">
                             <template #default="{ row }">
-                                <el-icon v-if="row.isAlive" color="#67C23A">
-                                    <SuccessFilled />
-                                </el-icon>
-                                <el-icon v-else color="#F56C6C">
-                                    <CloseBold />
-                                </el-icon>
+                                <el-tag
+                                    :type="row.status === '已完成' ? 'success' : row.status === '进行中' ? 'warning' : 'info'">
+                                    {{ row.status }}
+                                </el-tag>
                             </template>
                         </el-table-column>
+                        <el-table-column prop="progress" label="进度百分比" />
                     </el-table>
                 </el-card>
             </el-col>
@@ -324,13 +354,15 @@ onMounted(() => {
     padding-top: 16px;
 }
 
-/* 新增样式 */
+/* 修改样式 */
 .node-table {
     overflow-y: auto;
+    height: 100%;
 }
 
 .node-table .el-table__body-wrapper {
     overflow-y: auto !important;
+    height: 100%;
 }
 
 .node-table .el-table__body {

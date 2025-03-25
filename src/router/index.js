@@ -60,6 +60,11 @@ const routes = [{
                 component: () => import('../views/DataOverview/DataAnalyse.vue')
             },
             {
+                path: '/interface/interface-governance',
+                name: 'InterfaceGovernance',
+                component: () => import('../views/Interface/InterfaceGovernance.vue')
+            },
+            {
                 path: '/setting/access-permissions',
                 name: 'AccessPermissions',
                 component: () => import('../views/Setting/AccessPermissions.vue')
