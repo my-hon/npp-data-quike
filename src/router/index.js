@@ -60,9 +60,19 @@ const routes = [{
                 component: () => import('../views/DataOverview/DataAnalyse.vue')
             },
             {
-                path: '/interface/interface-governance',
-                name: 'InterfaceGovernance',
-                component: () => import('../views/Interface/InterfaceGovernance.vue')
+                path: '/interface/interface-list',
+                name: 'InterfaceList',
+                component: () => import('../views/Interface/InterfaceList.vue')
+            },
+            {
+                path: '/interface/monitoring-panel',
+                name: 'MonitoringPanel',
+                component: () => import('../views/Interface/MonitoringPanel.vue')
+            },
+            {
+                path: '/interface/log-analysis',
+                name: 'LogAnalysis',
+                component: () => import('../views/Interface/LogAnalysis.vue')
             },
             {
                 path: '/setting/access-permissions',
